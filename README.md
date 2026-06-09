@@ -1,98 +1,140 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Shalam Properties — API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+The backend REST API for Shalam Properties, a luxury real estate platform. Built with [NestJS](https://nestjs.com), [Prisma](https://www.prisma.io), and PostgreSQL.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Overview
 
-## Description
+This API powers the Shalam Properties frontend and admin dashboard. It manages property listings across three categories — **land**, **houses**, and **cars** — along with customer inquiries and admin authentication.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Tech Stack
 
-## Project setup
+- **NestJS** — Node.js framework
+- **Prisma** — ORM and database migrations
+- **PostgreSQL** — Database
+- **JWT** — Admin authentication
+- **bcrypt** — Password hashing
+- **Docker** — Local database setup
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- Docker (for running PostgreSQL locally)
+
+### 1. Start the database
 
 ```bash
-$ npm install
+docker-compose up -d
 ```
 
-## Compile and run the project
+### 2. Install dependencies
+
+```bash
+npm install
+```
+
+### 3. Configure environment
+
+Copy `.env.example` to `.env` and fill in your values:
+
+```env
+DATABASE_URL=postgresql://user:password@localhost:5432/shalam
+JWT_SECRET=your_jwt_secret
+PORT=3000
+```
+
+### 4. Run migrations and seed
+
+```bash
+npx prisma migrate dev
+npx prisma db seed
+```
+
+### 5. Start the server
 
 ```bash
 # development
-$ npm run start
+npm run start:dev
 
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+# production
+npm run start:prod
 ```
 
-## Run tests
+The API will be available at `http://localhost:3000/api`.
+
+## API Endpoints
+
+All routes are prefixed with `/api`.
+
+### Auth
+
+| Method | Route | Access | Description |
+|--------|-------|--------|-------------|
+| `POST` | `/auth/login` | Public | Admin login — returns a JWT |
+| `POST` | `/auth/change-password` | Admin | Change admin password |
+
+### Listings
+
+| Method | Route | Access | Description |
+|--------|-------|--------|-------------|
+| `GET` | `/listings` | Public | Get all listings. Filter by `?category=land\|house\|car` and `?featured=true` |
+| `GET` | `/listings/:id` | Public | Get a single listing |
+| `POST` | `/listings` | Admin | Create a listing |
+| `PATCH` | `/listings/:id` | Admin | Update a listing |
+| `DELETE` | `/listings/:id` | Admin | Delete a listing |
+
+### Inquiries
+
+| Method | Route | Access | Description |
+|--------|-------|--------|-------------|
+| `POST` | `/inquiries` | Public | Submit a contact/inquiry form |
+| `GET` | `/inquiries` | Admin | Get all inquiries |
+| `PATCH` | `/inquiries/:id/read` | Admin | Mark an inquiry as read |
+| `DELETE` | `/inquiries/:id` | Admin | Delete an inquiry |
+
+### Authentication
+
+Protected routes require a Bearer token in the `Authorization` header:
+
+```
+Authorization: Bearer <access_token>
+```
+
+## Data Models
+
+### Listing
+
+Supports three categories with category-specific fields:
+
+- **Land** — title, price, location, size
+- **House** — title, price, location, bedrooms, bathrooms, house size
+- **Car** — title, price, brand, model, year, mileage
+
+All listings support multiple images, a description, and a `featured` flag.
+
+### Inquiry
+
+Submitted by site visitors. Contains name, email, optional phone, message, and an optional reference to a listing.
+
+## Project Structure
+
+```
+src/
+├── auth/           # JWT auth, login, password management
+├── listings/       # Listing CRUD
+├── inquiries/      # Inquiry CRUD
+├── mail/           # Mail service
+├── prisma/         # Prisma client service
+└── main.ts         # App entry point
+```
+
+## Scripts
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm run start:dev     # Start in watch mode
+npm run build         # Compile TypeScript
+npm run test          # Unit tests
+npm run test:e2e      # End-to-end tests
+npm run lint          # Lint
 ```
-
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
